@@ -78,12 +78,11 @@ def hn_reply(item):
 keywords = ['learning', 'analysis', 'neural', 'deep', 'ask hn', 'machine', 'musk', 'tesla', 'pattern', 'django', 'celery']
 
 maxid = get_maxitem()
-last_id = maxid - 40
+last_id = maxid - 100
 
 while True:
     maxid = get_maxitem()
     for id in range(last_id, maxid):
-        print(id)
         item = get_story(id)
         if item:
             skip = True
@@ -91,8 +90,8 @@ while True:
                 if 'title' in item and k in item['title'].lower():
                     skip = False
             if skip:
-                print('.')
                 continue
+            os.system('notify-send \"{0}\"'.format(item['title']))
             print_item(item)
             hn_reply(item)
     last_id = maxid
