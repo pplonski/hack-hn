@@ -85,6 +85,7 @@ while True:
     for id in range(last_id, maxid):
         item = get_story(id)
         if item:
+            print(id, )
             skip = True
             for k in keywords:
                 if 'title' in item and k in item['title'].lower():
