@@ -88,7 +88,7 @@ while True:
         if item:
             skip = True
             for k in keywords:
-                if 'title' in item and k in item['title']:
+                if 'title' in item and k in item['title'].lower():
                     skip = False
             if skip:
                 print('.')
