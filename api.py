@@ -33,6 +33,7 @@ def print_item(item):
     print('{0}/item?id={1}'.format(URL, item['id']))
 
 session = requests.session()
+session.headers.update({'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'})
 
 def encode(s):
     return urllib.parse.quote(str(s), safe='~()*!.\'')
@@ -161,7 +162,9 @@ def repost_mode():
     while True:
         print('*** get post')
         posts = get_posts()
-
+        if len(posts) == 0:
+            time.sleep(10)
+            posts = get_posts()
         for title, link in posts.items():
             if title not in hist:
                 print('-'*50)
