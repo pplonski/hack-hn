@@ -64,6 +64,16 @@ def reply(id, text):
     body = get_data(b)
     request = session.post(URL + '/comment', data=body, headers=headers)
 
+def submit(title, link):
+
+    b = { 'title': title, 'url': link, 'goto': 'news'}
+    body = get_data(b)
+    request = session.post(URL + '/submit', data=body, headers=headers)
+    print(request)
+    print(request.text)
+    print(request.status_code)
+
+
 def hn_reply(item):
     print('Would you like to comment? [y]')
     yn = input()
@@ -75,25 +85,91 @@ def hn_reply(item):
         msg = input()
         reply(item['id'], msg)
 
-keywords = ['learning', 'analysis', 'neural', 'deep', 'ask hn', 'machine', 'musk', 'tesla', 'pattern', 'django', 'celery']
+def hn_submit(title, link):
+    user = os.environ.get('HN_US')
+    pw = os.environ.get('HN_PW')
+    login(user, pw)
+    submit(title, link)
 
-maxid = get_maxitem()
-last_id = maxid - 40
 
-while True:
+def comment_mode():
+    keywords = ['learning', 'analysis', 'neural', 'deep', 'ask hn', 'machine', 'musk', 'tesla', 'pattern', 'django', 'celery']
+
     maxid = get_maxitem()
-    for id in range(last_id, maxid):
-        print(id)
-        item = get_story(id)
-        if item:
-            skip = True
-            for k in keywords:
-                if 'title' in item and k in item['title'].lower():
-                    skip = False
-            if skip:
-                print('.')
-                continue
-            print_item(item)
-            hn_reply(item)
-    last_id = maxid
-    time.sleep(30)
+    last_id = maxid - 40
+
+    while True:
+        maxid = get_maxitem()
+        for id in range(last_id, maxid):
+            print(id)
+            item = get_story(id)
+            if item:
+                skip = True
+                for k in keywords:
+                    if 'title' in item and k in item['title'].lower():
+                        skip = False
+                if skip:
+                    print('.')
+                    continue
+                print_item(item)
+                hn_reply(item)
+        last_id = maxid
+        time.sleep(30)
+
+def get_posts():
+    #return {'[R] Natural Environment Benchmarks for Reinforcement Learning: we challenge the RL research community to develop more robust algorithms that meet high standards of evaluation': 'https://arxiv.org/abs/1811.06032', '[R] Rethinking ImageNet Pre-training': 'https://arxiv.org/abs/1811.08883', '[R] GPipe: Efficient Training of Giant Neural Networks using Pipeline Parallelism (new ImageNet SOTA)': 'https://arxiv.org/abs/1811.06965', 'GAN-QP: A Novel GAN Framework without Gradient Vanishing and Lipschitz Constraint': 'https://arxiv.org/abs/1811.07296', '[R] Practical Bayesian Learning of Neural Networks via Adaptive Subgradient Methods': 'https://arxiv.org/abs/1811.03679'}
+
+    r = requests.get('https://www.reddit.com/r/MachineLearning/new')
+
+    soup = BeautifulSoup(r.text, features="html.parser")
+    posts = {}
+    for ul in soup.find_all('article'):
+        titile, link = None, None
+        for h in ul.find_all('h2'):
+            title = h.text
+        for a in ul.find_all('a', {'target':'_blank'}):
+            #print('***', a.get('href'))
+            if 'reddit' not in a.get('href'):
+                link = a.get('href')
+        #print(title, link)
+        if title is not None and link is not None:
+            posts[title] = link
+    #print(posts)
+    if len(posts) == 0:
+        print(r.text)
+    return posts
+
+def prepare_title(title):
+    title = title.replace('[R]', '')
+    title = title.strip()
+    if len(title) > 80:
+        arr = title.split()
+        title = []
+        cnt = 0
+        for a in arr:
+            cnt += len(a)+1
+            if cnt < 80:
+                title += [a]
+        title = ' '.join(title)
+    return title
+
+def repost_mode():
+    print('*** REPOST MODE ***')
+    hist = {}
+    while True:
+        print('*** get post')
+        posts = get_posts()
+
+        for title, link in posts.items():
+            if title not in hist:
+                print('-'*50)
+                print(title)
+                hist[title] = link
+                new_title = prepare_title(title)
+                print(new_title)
+                print(link)
+
+
+        time.sleep(300)
+
+repost_mode()
