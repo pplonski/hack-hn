@@ -92,10 +92,11 @@ def hn_submit(title, link):
     submit(title, link)
 
 
+
 def comment_mode():
     keywords = ['learning', 'analysis', 'neural', 'deep', 'ask hn', 'machine', 'musk', 'tesla', 'pattern', 'django', 'celery']
-
     maxid = get_maxitem()
+    last_id = maxid - 100
     last_id = maxid - 40
 
     while True:
@@ -111,6 +112,7 @@ def comment_mode():
                 if skip:
                     print('.')
                     continue
+                os.system('notify-send \"{0}\"'.format(item['title']))
                 print_item(item)
                 hn_reply(item)
         last_id = maxid
