@@ -9,6 +9,11 @@ URL = 'https://news.ycombinator.com'
 headers = {"Content-Type": "application/x-www-form-urlencoded",
             "Access-Control-Allow-Origin": "*"}
 
+import praw
+
+reddit = praw.Reddit(client_id=os.environ.get('R_ID'),
+                     client_secret=os.environ.get('R_SECRET'),
+                     user_agent=os.environ.get('R_USER'))
 
 def get_maxitem():
     r = requests.get('https://hacker-news.firebaseio.com/v0/maxitem.json?print=pretty')
@@ -33,7 +38,6 @@ def print_item(item):
     print('{0}/item?id={1}'.format(URL, item['id']))
 
 session = requests.session()
-session.headers.update({'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'})
 
 def encode(s):
     return urllib.parse.quote(str(s), safe='~()*!.\'')
@@ -119,27 +123,11 @@ def comment_mode():
         last_id = maxid
         time.sleep(30)
 
-def get_posts():
-    #return {'[R] Natural Environment Benchmarks for Reinforcement Learning: we challenge the RL research community to develop more robust algorithms that meet high standards of evaluation': 'https://arxiv.org/abs/1811.06032', '[R] Rethinking ImageNet Pre-training': 'https://arxiv.org/abs/1811.08883', '[R] GPipe: Efficient Training of Giant Neural Networks using Pipeline Parallelism (new ImageNet SOTA)': 'https://arxiv.org/abs/1811.06965', 'GAN-QP: A Novel GAN Framework without Gradient Vanishing and Lipschitz Constraint': 'https://arxiv.org/abs/1811.07296', '[R] Practical Bayesian Learning of Neural Networks via Adaptive Subgradient Methods': 'https://arxiv.org/abs/1811.03679'}
-
-    r = requests.get('https://www.reddit.com/r/MachineLearning/new')
-
-    soup = BeautifulSoup(r.text, features="html.parser")
+def get_posts(sub = 'MachineLearning'):
     posts = {}
-    for ul in soup.find_all('article'):
-        titile, link = None, None
-        for h in ul.find_all('h2'):
-            title = h.text
-        for a in ul.find_all('a', {'target':'_blank'}):
-            #print('***', a.get('href'))
-            if 'reddit' not in a.get('href'):
-                link = a.get('href')
-        #print(title, link)
-        if title is not None and link is not None:
-            posts[title] = link
-    #print(posts)
-    if len(posts) == 0:
-        print(r.text)
+    for submission in reddit.subreddit(sub).new(limit=10):
+        if 'reddit' not in submission.url:
+            posts[submission.title] = submission.url
     return posts
 
 def prepare_title(title):
@@ -160,11 +148,8 @@ def repost_mode():
     print('*** REPOST MODE ***')
     hist = {}
     while True:
-        print('*** get post')
+
         posts = get_posts()
-        if len(posts) == 0:
-            time.sleep(10)
-            posts = get_posts()
         for title, link in posts.items():
             if title not in hist:
                 print('-'*50)
