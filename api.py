@@ -9,12 +9,6 @@ URL = 'https://news.ycombinator.com'
 headers = {"Content-Type": "application/x-www-form-urlencoded",
             "Access-Control-Allow-Origin": "*"}
 
-import praw
-
-reddit = praw.Reddit(client_id=os.environ.get('R_ID'),
-                     client_secret=os.environ.get('R_SECRET'),
-                     user_agent=os.environ.get('R_USER'))
-
 def get_maxitem():
     r = requests.get('https://hacker-news.firebaseio.com/v0/maxitem.json?print=pretty')
     return r.json()
@@ -101,8 +95,8 @@ def hn_submit(title, link):
 def comment_mode():
     keywords = ['learning', 'analysis', 'neural', 'deep', 'ask hn', 'machine', 'musk', 'tesla', 'pattern', 'django', 'celery']
     maxid = get_maxitem()
-    last_id = maxid - 100
-    last_id = maxid - 40
+    last_id = maxid - 300
+    #last_id = maxid - 40
 
     while True:
         maxid = get_maxitem()
@@ -123,43 +117,5 @@ def comment_mode():
         last_id = maxid
         time.sleep(30)
 
-def get_posts(sub = 'MachineLearning'):
-    posts = {}
-    for submission in reddit.subreddit(sub).new(limit=10):
-        if 'reddit' not in submission.url:
-            posts[submission.title] = submission.url
-    return posts
 
-def prepare_title(title):
-    title = title.replace('[R]', '')
-    title = title.strip()
-    if len(title) > 80:
-        arr = title.split()
-        title = []
-        cnt = 0
-        for a in arr:
-            cnt += len(a)+1
-            if cnt < 80:
-                title += [a]
-        title = ' '.join(title)
-    return title
-
-def repost_mode():
-    print('*** REPOST MODE ***')
-    hist = {}
-    while True:
-
-        posts = get_posts()
-        for title, link in posts.items():
-            if title not in hist:
-                print('-'*50)
-                print(title)
-                hist[title] = link
-                new_title = prepare_title(title)
-                print(new_title)
-                print(link)
-
-
-        time.sleep(300)
-
-repost_mode()
+comment_mode()
